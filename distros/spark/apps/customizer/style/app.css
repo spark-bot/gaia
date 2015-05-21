@@ -1,0 +1,22 @@
+@import '../components/gaia-icons/gaia-icons-embedded.css';
+
+gaia-dialog {
+  z-index: 10000002 !important;
+}
+
+gaia-modal {
+  z-index: 10000001 !important;
+  background: white;
+}
+
+.settings gaia-list gaia-button {
+  /* XXX/drs: Why do we have to make this !important? It's very specific. */
+  margin: 0 0 0 auto !important;
+
+  --button-background: red;
+  text-align: center;
+}
+
+.settings gaia-list .addon-time {
+  color: #aaa;
+}
