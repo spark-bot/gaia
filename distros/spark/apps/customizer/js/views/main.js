@@ -43,7 +43,6 @@ define(["exports"], function (exports) {
       // childViews container, so that we can add and remove them all at once.
       this.childViews.appendChild(this.actionMenuView.el);
       this.childViews.appendChild(this.editView.el);
-      this.childViews.appendChild(this.settingsView.el);
       this.childViews.appendChild(this.viewSourceView.el);
       this.childViews.appendChild(this.appendChildView.el);
       this.childViews.appendChild(this.copyMoveView.el);
@@ -51,11 +50,8 @@ define(["exports"], function (exports) {
       // Hide this view from the DOM tree.
       this.customizer.gaiaDomTree.filter = "#" + this.el.id;
 
-      this.on("menu", "fxos-customizer", function (evt) {
-        _this.customizer.unwatchChanges();
-        _this.controller.settingsController.open();
-
-        setTimeout(_this.customizer.watchChanges.bind(_this.customizer), 1000);
+      this.on("menu", "fxos-customizer", function () {
+        return _this.controller.openAddonManager();
       });
 
       this.on("action", "fxos-customizer", function (evt) {

@@ -1,7 +1,11 @@
 define(["exports"], function (exports) {
   "use strict";
 
+  /* global MozActivity */
+
   /* global AddonGenerator */
+
+  var GENERATED_ADDON_COUNT_KEY = "__CUSTOMIZER__generatedAddonCount";
 
   var AddonService = {};
 
@@ -32,12 +36,12 @@ define(["exports"], function (exports) {
     });
   };
 
-  AddonService.getAddon = function (origin) {
+  AddonService.getAddon = function (manifestURL) {
     var _this = this;
     return new Promise(function (resolve, reject) {
       _this.getAddons().then(function (addons) {
         var addon = addons.find(function (addon) {
-          return addon.origin === origin;
+          return addon.manifestURL === manifestURL;
         });
         if (!addon) {
           reject();
@@ -50,19 +54,23 @@ define(["exports"], function (exports) {
   };
 
   AddonService.getGenerator = function (target) {
+    var _this2 = this;
     return new Promise(function (resolve, reject) {
-      var name = window.prompt("Enter a name for this add-on", "Addon " + new Date().toISOString());
-      if (!name) {
-        reject();
-        return;
-      }
+      _this2.getAddons(window.location.host).then(function (addons) {
+        var number = parseInt(localStorage.getItem(GENERATED_ADDON_COUNT_KEY), 10) || 0;
+        var name = window.prompt("Enter a name for this add-on", "Addon " + (number + 1));
+        if (!name) {
+          reject();
+          return;
+        }
 
-      var generator = new AddonGenerator({
-        target: target,
-        name: name
-      });
+        var generator = new AddonGenerator({
+          target: target,
+          name: name
+        });
 
-      resolve(generator);
+        resolve(generator);
+      })["catch"](reject);
     });
   };
 
@@ -80,39 +88,31 @@ define(["exports"], function (exports) {
   };
 
   AddonService.install = function (blob) {
+    var _this3 = this;
     return new Promise(function (resolve, reject) {
-      // Import the addon using the tempfile.
-      navigator.mozApps.mgmt["import"](blob).then(function (addon) {
-        // Enable the addon by default.
-        navigator.mozApps.mgmt.setEnabled(addon, true);
-        resolve(addon);
-      })["catch"](function (error) {
+      var activity = new MozActivity({
+        name: "import-app",
+        data: {
+          blob: blob
+        }
+      });
+
+      activity.onsuccess = function () {
+        _this3.getAddon(activity.result.manifestURL).then(function (addon) {
+          var number = parseInt(localStorage.getItem(GENERATED_ADDON_COUNT_KEY), 10) || 0;
+          localStorage.setItem(GENERATED_ADDON_COUNT_KEY, number + 1);
+
+          resolve(addon);
+        })["catch"](function (error) {
+          console.error("Unable to get the addon after importing", error);
+          reject(error);
+        });
+      };
+
+      activity.onerror = function (error) {
         console.error("Unable to install the addon", error);
         reject(error);
-      });
-    });
-  };
-
-  AddonService.uninstall = function (origin) {
-    var _this2 = this;
-    return new Promise(function (resolve, reject) {
-      _this2.getAddons().then(function (addons) {
-        var addon = addons.find(function (addon) {
-          return addon.origin === origin;
-        });
-        if (!addon) {
-          reject();
-          return;
-        }
-
-        var request = navigator.mozApps.mgmt.uninstall(addon);
-        request.onsuccess = function () {
-          resolve(request);
-        };
-        request.onerror = function () {
-          reject(request);
-        };
-      })["catch"](reject);
+      };
     });
   };
 });

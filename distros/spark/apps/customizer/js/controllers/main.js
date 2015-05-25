@@ -51,14 +51,12 @@ define(["exports"], function (exports) {
 
         var editView = new EditView();
         var actionMenuView = new ActionMenuView();
-        var settingsView = new SettingsView();
         var viewSourceView = new ViewSourceView();
         var appendChildView = new AppendChildView();
         var copyMoveView = new CopyMoveView();
         var mainView = new MainView({
           editView: editView,
           actionMenuView: actionMenuView,
-          settingsView: settingsView,
           viewSourceView: viewSourceView,
           appendChildView: appendChildView,
           copyMoveView: copyMoveView
@@ -88,20 +86,14 @@ define(["exports"], function (exports) {
           copyMoveController: copyMoveController
         });
 
-        var settingsController = new SettingsController({
-          view: settingsView
-        });
-
         _this2.view = mainView;
         mainView.init(_this2);
 
         _this2.actionMenuController = actionMenuController;
-        _this2.settingsController = settingsController;
 
         editController.mainController = _this2;
         viewSourceController.mainController = _this2;
         actionMenuController.mainController = _this2;
-        settingsController.mainController = _this2;
         appendChildController.mainController = _this2;
         copyMoveController.mainController = _this2;
 
@@ -175,6 +167,23 @@ define(["exports"], function (exports) {
       });
 
       this._isOpen = false;
+    };
+
+    MainController.prototype.openAddonManager = function () {
+      var activity = new MozActivity({
+        name: "configure",
+        data: {
+          target: "device",
+          section: "addons",
+          options: {
+            manifestURL: this.manifestURL
+          }
+        }
+      });
+
+      activity.onerror = function (e) {
+        console.error("Error opening \"Settings > Add-ons\" panel", e);
+      };
     };
 
     _classProps(MainController, null, {
